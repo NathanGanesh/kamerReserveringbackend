@@ -1,0 +1,147 @@
+@baseUrl = http://localhost:8080
+@adminAuth = Basic YWRtaW5AZ21haWwuY29tOkFkbWluVXNlciEx
+@userAuth = Basic cG9rZW1vbkBnbWFpbC5jb206UG9rZW1vbiEyMw==
+@userId = 1
+@reservationId = 1
+
+### Register user
+POST {{baseUrl}}/user/register
+Content-Type: application/json
+
+{
+  "naam": "Http",
+  "achterNaam": "Tester",
+  "email": "http-tester@example.com",
+  "wachtwoord": "StrongPass1",
+  "terms": true
+}
+
+### Login seeded user
+POST {{baseUrl}}/user/login
+Content-Type: application/json
+
+{
+  "email": "pokemon@gmail.com",
+  "wachtwoord": "Pokemon!23"
+}
+
+### List users as admin
+GET {{baseUrl}}/user/all
+Authorization: {{adminAuth}}
+
+### Get user by id as admin
+GET {{baseUrl}}/user/{{userId}}
+Authorization: {{adminAuth}}
+
+### Update user as admin
+PUT {{baseUrl}}/user/{{userId}}
+Authorization: {{adminAuth}}
+Content-Type: application/json
+
+{
+  "naam": "AdminUpdated",
+  "achternaam": "User",
+  "email": "admin-updated@example.com",
+  "profileImageUrl": "https://example.com/profile.png",
+  "active": true,
+  "notLocked": true
+}
+
+### Delete user as admin
+DELETE {{baseUrl}}/user/{{userId}}
+Authorization: {{adminAuth}}
+
+### List rooms
+GET {{baseUrl}}/kamer/all
+Authorization: {{userAuth}}
+
+### Get room by name
+GET {{baseUrl}}/kamer/kamer2
+Authorization: {{userAuth}}
+
+### Create room as admin
+POST {{baseUrl}}/kamer/new
+Authorization: {{adminAuth}}
+Content-Type: application/json
+
+{
+  "naam": "http-room",
+  "start": "2026-04-13T08:00:00.000Z",
+  "sluit": "2026-04-13T18:00:00.000Z"
+}
+
+### Update room as admin
+PUT {{baseUrl}}/kamer/edit/http-room
+Authorization: {{adminAuth}}
+Content-Type: application/json
+
+{
+  "naam": "http-room-updated",
+  "start": "2026-04-13T09:00:00.000Z",
+  "sluit": "2026-04-13T19:00:00.000Z"
+}
+
+### Delete room as admin
+DELETE {{baseUrl}}/kamer/delete/http-room-updated
+Authorization: {{adminAuth}}
+
+### List reservations for current user
+GET {{baseUrl}}/reservering/all
+Authorization: {{userAuth}}
+
+### Create reservation
+POST {{baseUrl}}/reservering
+Authorization: {{userAuth}}
+Content-Type: application/json
+
+{
+  "kamerNaam": "kamer2",
+  "startTijd": "2026-04-13T09:00:00.000Z",
+  "eindTijd": "2026-04-13T10:00:00.000Z"
+}
+
+### Get reservation by id
+GET {{baseUrl}}/reservering/{{reservationId}}
+Authorization: {{userAuth}}
+
+### Update reservation by id
+PUT {{baseUrl}}/reservering/{{reservationId}}
+Authorization: {{userAuth}}
+Content-Type: application/json
+
+{
+  "kamerNaam": "kamer2",
+  "startTijd": "2026-04-13T10:00:00.000Z",
+  "eindTijd": "2026-04-13T11:00:00.000Z"
+}
+
+### Delete reservation by id
+DELETE {{baseUrl}}/reservering/{{reservationId}}
+Authorization: {{userAuth}}
+
+### Overlap example should fail with 400
+POST {{baseUrl}}/reservering
+Authorization: {{userAuth}}
+Content-Type: application/json
+
+{
+  "kamerNaam": "Kamer1",
+  "startTijd": "2021-10-20T07:30:00.000Z",
+  "eindTijd": "2021-10-20T07:45:00.000Z"
+}
+
+### Unauthorized example should fail with 401
+GET {{baseUrl}}/reservering/all
+
+### Forbidden example should fail with 403
+PUT {{baseUrl}}/user/{{userId}}
+Authorization: {{userAuth}}
+Content-Type: application/json
+
+{
+  "naam": "Forbidden",
+  "achternaam": "User",
+  "email": "forbidden@example.com",
+  "active": true,
+  "notLocked": true
+}

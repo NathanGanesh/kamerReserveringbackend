@@ -1,30 +1,18 @@
-version: "3.8"
 services:
-  mongodb:
-    image: mongo
-    container_name: mongodb
-    command: mongod --port 27017
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kamerreserveringbackend-app
+    restart: unless-stopped
     ports:
-      - 27017:27017
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
     volumes:
-      - data:/data
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=rootuser
-      - MONGO_INITDB_ROOT_PASSWORD=rootpass
-      - MONO
-  mongo-express:
-    image: mongo-express
-    container_name: mongo-express
-    restart: always
-    ports:
-      - 8081:8081
-    environment:
-      - ME_CONFIG_MONGODB_ADMINUSERNAME=rootuser
-      - ME_CONFIG_MONGODB_ADMINPASSWORD=rootpass
-      - ME_CONFIG_MONGODB_SERVER=mongodb
-volumes:
-  data: { }
+      - kamerreservering_h2_data:/app/data
+      - kamerreservering_uploads:/app/uploads
 
-networks:
-  default:
-    name: mongodb_network
+volumes:
+  kamerreservering_h2_data:
+  kamerreservering_uploads:

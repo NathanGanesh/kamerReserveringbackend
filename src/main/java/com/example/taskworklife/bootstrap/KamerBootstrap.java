@@ -18,14 +18,13 @@ import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.Month;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 @Component
 @Slf4j
-@Profile({"test", "dev", "default"})
+@Profile({"test", "dev", "default", "docker"})
 public class KamerBootstrap implements ApplicationListener<ContextRefreshedEvent> {
     private final KamerRepo kamerRepo;
     private final FileAttachmentRepo fileAttachmentRepo;
@@ -40,6 +39,7 @@ public class KamerBootstrap implements ApplicationListener<ContextRefreshedEvent
 
     private List<Kamer> getKamers() {
         List<Kamer> kamers = new ArrayList<>();
+        LocalDate baseDate = LocalDate.now();
         User userByEmail = userRepo.findUserByEmail("admin@gmail.com");
         Kamer kamer = new Kamer();
         //kamer 1
@@ -47,15 +47,15 @@ public class KamerBootstrap implements ApplicationListener<ContextRefreshedEvent
         //kamer 1 reservering
         List<Reservering> reserveringListKamer1 = new ArrayList<>();
         Reservering reservering1Kamer1 = new Reservering();
-        reservering1Kamer1.setStart(LocalDateTime.of(LocalDate.of(2021, Month.OCTOBER, 20), LocalTime.of(7, 0)));
-        reservering1Kamer1.setEnd(LocalDateTime.of(LocalDate.of(2021, Month.OCTOBER, 20), LocalTime.of(8, 0)));
+        reservering1Kamer1.setStart(atTime(baseDate, 7, 0));
+        reservering1Kamer1.setEnd(atTime(baseDate, 8, 0));
 
         Reservering reservering1Kamer2 = new Reservering();
-        reservering1Kamer2.setStart(LocalDateTime.of(LocalDate.of(2021, Month.OCTOBER, 20), LocalTime.of(8, 0)));
-        reservering1Kamer2.setEnd(LocalDateTime.of(LocalDate.of(2021, Month.OCTOBER, 20), LocalTime.of(9, 0)));
+        reservering1Kamer2.setStart(atTime(baseDate, 8, 0));
+        reservering1Kamer2.setEnd(atTime(baseDate, 9, 0));
 
-        kamer.setStartTijd(LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0)));
-        kamer.setSluitTijd(LocalDateTime.of(LocalDate.now(), LocalTime.of(20, 0)));
+        kamer.setStartTijd(atTime(baseDate, 0, 0));
+        kamer.setSluitTijd(atTime(baseDate, 20, 0));
         reservering1Kamer1.setKamer(kamer);
         reservering1Kamer2.setKamer(kamer);
         reserveringListKamer1.add(reservering1Kamer1);
@@ -64,24 +64,24 @@ public class KamerBootstrap implements ApplicationListener<ContextRefreshedEvent
 
         Kamer kamer2 = new Kamer();
         kamer2.setNaam("kamer2");
-        kamer2.setStartTijd(LocalDateTime.of(LocalDate.now(), LocalTime.of(7, 0)));
-        kamer2.setSluitTijd(LocalDateTime.of(LocalDate.now(), LocalTime.of(17, 0)));
+        kamer2.setStartTijd(atTime(baseDate, 7, 0));
+        kamer2.setSluitTijd(atTime(baseDate, 17, 0));
         //kamer 1 reservering
         List<Reservering> reserveringListKamer2 = new ArrayList<>();
 
         Reservering reservering2Kamer1 = new Reservering();
-        reservering2Kamer1.setStart(LocalDateTime.of(LocalDate.now(), LocalTime.of(8, 0)));
-        reservering2Kamer1.setEnd(LocalDateTime.of(LocalDate.now(), LocalTime.of(9, 0)));
+        reservering2Kamer1.setStart(atTime(baseDate, 8, 0));
+        reservering2Kamer1.setEnd(atTime(baseDate, 9, 0));
 
 //        reservering2Kamer1.setUser(userByEmail);
 
         Reservering reservering2Kamer2 = new Reservering();
-        reservering2Kamer2.setStart(LocalDateTime.of(LocalDate.now(), LocalTime.of(7, 0)));
-        reservering2Kamer2.setEnd(LocalDateTime.of(LocalDate.now(), LocalTime.of(8, 0)));
+        reservering2Kamer2.setStart(atTime(baseDate, 7, 0));
+        reservering2Kamer2.setEnd(atTime(baseDate, 8, 0));
 
         Reservering reservering2Kamer3 = new Reservering();
-        reservering2Kamer3.setStart(LocalDateTime.of(LocalDate.now(), LocalTime.of(16, 0)));
-        reservering2Kamer3.setEnd(LocalDateTime.of(LocalDate.now(), LocalTime.of(17, 0)));
+        reservering2Kamer3.setStart(atTime(baseDate, 16, 0));
+        reservering2Kamer3.setEnd(atTime(baseDate, 17, 0));
 
 //        reservering2Kamer2.setUser(userByEmail);
 
@@ -116,9 +116,16 @@ public class KamerBootstrap implements ApplicationListener<ContextRefreshedEvent
         return kamers;
     }
 
+    private LocalDateTime atTime(LocalDate date, int hour, int minute) {
+        return LocalDateTime.of(date, LocalTime.of(hour, minute));
+    }
+
     @Override
     @Transactional
     public void onApplicationEvent(ContextRefreshedEvent event) {
+        if (kamerRepo.count() > 0) {
+            return;
+        }
         kamerRepo.saveAll(getKamers());
     }
 }

@@ -1,0 +1,12 @@
+.git
+.gitignore
+.gradle
+.idea
+.vscode
+build
+out
+uploads-test
+uploads-dev
+uploads-prod
+*.iml
+*.log

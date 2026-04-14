@@ -2,17 +2,14 @@ package com.example.taskworklife.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import lombok.*;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.fasterxml.jackson.databind.PropertyNamingStrategies.SNAKE_CASE;
 
 @Entity
 @Getter
@@ -25,13 +22,11 @@ public class Kamer {
     @JsonIgnore
     private Long id;
 
-
     private String naam;
-
     private LocalDateTime sluitTijd;
     private LocalDateTime startTijd;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "kamer", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Reservering> reservering = new ArrayList<>();
 
@@ -47,7 +42,15 @@ public class Kamer {
 
     public Kamer addReservering(Reservering reservering) {
         reservering.setKamer(this);
-        this.reservering.add(reservering);
+        if (!this.reservering.contains(reservering)) {
+            this.reservering.add(reservering);
+        }
+        return this;
+    }
+
+    public Kamer removeReservering(Reservering reservering) {
+        this.reservering.remove(reservering);
+        reservering.setKamer(null);
         return this;
     }
 }

@@ -1,9 +1,8 @@
 package com.example.taskworklife.models;
 
 import com.example.taskworklife.models.user.User;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,7 +14,6 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @Setter
-
 public class Reservering {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -24,11 +22,12 @@ public class Reservering {
 
     private LocalDateTime start;
     private LocalDateTime end;
-    @JsonManagedReference
+
+    @JsonBackReference
     @ManyToOne
     private Kamer kamer;
-    @JsonManagedReference
+
+    @JsonBackReference
     @ManyToOne
     private User user;
-
- }
+}
