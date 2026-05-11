@@ -16,8 +16,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,14 +50,16 @@ class UserControllerIntegrationTest {
         dto.setTerms(true);
 
         mockMvc.perform(
-                post("/user/register")
+                post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto))
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.naam").value("Test"))
                 .andExpect(jsonPath("$.email").value(uniqueEmail))
-                .andExpect(jsonPath("$.role").value("ROLE_USER"));
+                .andExpect(jsonPath("$.role").value("ROLE_USER"))
+                .andExpect(jsonPath("$.token").exists())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"));
 
         User createdUser = userRepo.findUserByEmail(uniqueEmail);
         assertThat(createdUser).isNotNull();
@@ -78,22 +78,25 @@ class UserControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.naam").value("jan"))
                 .andExpect(jsonPath("$.email").value("pokemon@gmail.com"))
-                .andExpect(jsonPath("$.role").value("ROLE_USER"));
+                .andExpect(jsonPath("$.role").value("ROLE_USER"))
+                .andExpect(jsonPath("$.token").exists())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"));
     }
 
     @Test
     void adminCanReadUpdateAndDeleteUser() throws Exception {
         Long userId = registerUserAndReturnId("managed" + UUID.randomUUID().toString().replace("-", "") + "@example.com");
         String managedEmail = userRepo.findById(userId).orElseThrow().getEmail();
+        String adminAuthorization = bearerToken("admin@gmail.com", "AdminUser!1");
 
-        MvcResult listResult = mockMvc.perform(get("/user/all")
-                        .header(HttpHeaders.AUTHORIZATION, basicAuth("admin@gmail.com", "AdminUser!1")))
+        MvcResult listResult = mockMvc.perform(get("/users")
+                        .header(HttpHeaders.AUTHORIZATION, adminAuthorization))
                 .andExpect(status().isOk())
                 .andReturn();
         assertThat(listResult.getResponse().getContentAsString()).contains(managedEmail);
 
-        mockMvc.perform(get("/user/{id}", userId)
-                        .header(HttpHeaders.AUTHORIZATION, basicAuth("admin@gmail.com", "AdminUser!1")))
+        mockMvc.perform(get("/users/{id}", userId)
+                        .header(HttpHeaders.AUTHORIZATION, adminAuthorization))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userId))
                 .andExpect(jsonPath("$.email").exists());
@@ -106,8 +109,8 @@ class UserControllerIntegrationTest {
         updateDto.setActive(true);
         updateDto.setNotLocked(true);
 
-        mockMvc.perform(put("/user/{id}", userId)
-                        .header(HttpHeaders.AUTHORIZATION, basicAuth("admin@gmail.com", "AdminUser!1"))
+        mockMvc.perform(put("/users/{id}", userId)
+                        .header(HttpHeaders.AUTHORIZATION, adminAuthorization)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk())
@@ -115,8 +118,8 @@ class UserControllerIntegrationTest {
                 .andExpect(jsonPath("$.achternaam").value("Manager"))
                 .andExpect(jsonPath("$.email").value("updated" + userId + "@example.com"));
 
-        mockMvc.perform(delete("/user/{id}", userId)
-                        .header(HttpHeaders.AUTHORIZATION, basicAuth("admin@gmail.com", "AdminUser!1")))
+        mockMvc.perform(delete("/users/{id}", userId)
+                        .header(HttpHeaders.AUTHORIZATION, adminAuthorization))
                 .andExpect(status().isNoContent());
 
         assertThat(userRepo.findById(userId)).isEmpty();
@@ -125,6 +128,7 @@ class UserControllerIntegrationTest {
     @Test
     void normalUserCannotManageAdminOnlyUserEndpoints() throws Exception {
         Long userId = registerUserAndReturnId("forbidden" + UUID.randomUUID().toString().replace("-", "") + "@example.com");
+        String userAuthorization = bearerToken("pokemon@gmail.com", "Pokemon!23");
 
         UserUpdateDto updateDto = new UserUpdateDto();
         updateDto.setNaam("Nope");
@@ -133,8 +137,8 @@ class UserControllerIntegrationTest {
         updateDto.setActive(true);
         updateDto.setNotLocked(true);
 
-        mockMvc.perform(put("/user/{id}", userId)
-                        .header(HttpHeaders.AUTHORIZATION, basicAuth("pokemon@gmail.com", "Pokemon!23"))
+        mockMvc.perform(put("/users/{id}", userId)
+                        .header(HttpHeaders.AUTHORIZATION, userAuthorization)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isForbidden());
@@ -149,7 +153,7 @@ class UserControllerIntegrationTest {
         dto.setTerms(true);
 
         MvcResult result = mockMvc.perform(
-                post("/user/register")
+                post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto))
         )
@@ -162,9 +166,17 @@ class UserControllerIntegrationTest {
         return createdUser.getId();
     }
 
-    private String basicAuth(String username, String password) {
-        String token = Base64.getEncoder()
-                .encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
-        return "Basic " + token;
+    private String bearerToken(String username, String password) throws Exception {
+        UserLoginDto dto = new UserLoginDto(username, password);
+        MvcResult result = mockMvc.perform(
+                post("/user/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto))
+        )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode response = objectMapper.readTree(result.getResponse().getContentAsString());
+        return "Bearer " + response.get("token").asText();
     }
 }

@@ -1,5 +1,6 @@
 package com.example.taskworklife.config;
 
+import com.example.taskworklife.filter.JWTAuthorizationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -15,6 +16,9 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import javax.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
@@ -22,11 +26,17 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private final UserDetailsService userDetailsService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final JWTAuthorizationFilter jwtAuthorizationFilter;
 
     @Autowired
-    public SecurityConfiguration(@Qualifier("userDetailsService") UserDetailsService userDetailsService, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public SecurityConfiguration(
+            @Qualifier("userDetailsService") UserDetailsService userDetailsService,
+            BCryptPasswordEncoder bCryptPasswordEncoder,
+            JWTAuthorizationFilter jwtAuthorizationFilter
+    ) {
         this.userDetailsService = userDetailsService;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.jwtAuthorizationFilter = jwtAuthorizationFilter;
     }
 
     @Override
@@ -37,27 +47,31 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-                .antMatchers("/user/login", "/user/register", "/user/image/**").permitAll()
+                .antMatchers("/user/login", "/user/register", "/users", "/users/register", "/user/image/**").permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .antMatchers(HttpMethod.GET, "/kamer/all", "/kamer/*", "/kamer/*/reserveringen/*").hasAnyAuthority("kamer:read")
-                .antMatchers(HttpMethod.POST, "/kamer/new").hasAnyAuthority("kameradmin:write")
-                .antMatchers(HttpMethod.PUT, "/kamer/edit/**").hasAnyAuthority("kamer:update", "kameradmin:write")
-                .antMatchers(HttpMethod.DELETE, "/kamer/delete/**").hasAnyAuthority("kamer:delete")
-                .antMatchers(HttpMethod.POST, "/kamer/*/reserveer").hasAnyAuthority("kameruser:write", "reservering:write")
-                .antMatchers(HttpMethod.GET, "/user/all", "/user/*").hasAnyAuthority("userAdmin:read")
-                .antMatchers(HttpMethod.PUT, "/user/*").hasAnyAuthority("user:update")
-                .antMatchers(HttpMethod.DELETE, "/user/*").hasAnyAuthority("user:delete")
-                .antMatchers(HttpMethod.GET, "/reservering/**").hasAnyAuthority("reservering:read")
-                .antMatchers(HttpMethod.POST, "/reservering").hasAnyAuthority("reservering:write")
-                .antMatchers(HttpMethod.PUT, "/reservering/*").hasAnyAuthority("reservering:update")
-                .antMatchers(HttpMethod.DELETE, "/reservering/*").hasAnyAuthority("reservering:delete")
+                .antMatchers(HttpMethod.GET, "/kamers", "/kamers/*", "/kamers/*/reserveringen/*").hasAnyAuthority("kamer:read")
+                .antMatchers(HttpMethod.POST, "/kamers").hasAnyAuthority("kameradmin:write")
+                .antMatchers(HttpMethod.PUT, "/kamers/*").hasAnyAuthority("kamer:update", "kameradmin:write")
+                .antMatchers(HttpMethod.DELETE, "/kamers/*").hasAnyAuthority("kamer:delete")
+                .antMatchers(HttpMethod.POST, "/kamers/*/reserveer").hasAnyAuthority("kameruser:write", "reservering:write")
+                .antMatchers(HttpMethod.GET, "/user/all", "/user/*", "/users", "/users/*").hasAnyAuthority("userAdmin:read")
+                .antMatchers(HttpMethod.PUT, "/user/*", "/users/*").hasAnyAuthority("user:update")
+                .antMatchers(HttpMethod.DELETE, "/user/*", "/users/*").hasAnyAuthority("user:delete")
+                .antMatchers(HttpMethod.GET, "/reservering/**", "/reserveringen/**").hasAnyAuthority("reservering:read")
+                .antMatchers(HttpMethod.POST, "/reservering", "/reserveringen").hasAnyAuthority("reservering:write")
+                .antMatchers(HttpMethod.PUT, "/reservering/*", "/reserveringen/*").hasAnyAuthority("reservering:update")
+                .antMatchers(HttpMethod.DELETE, "/reservering/*", "/reserveringen/*").hasAnyAuthority("reservering:delete")
                 .antMatchers(HttpMethod.GET, "/images/**").hasAnyAuthority("images:read")
                 .anyRequest().authenticated()
-                .and().httpBasic();
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint((request, response, exception) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED, exception.getMessage()))
+                .accessDeniedHandler((request, response, exception) -> response.sendError(HttpServletResponse.SC_FORBIDDEN, exception.getMessage()));
 
         http.cors().and().csrf().disable();
         http.headers().frameOptions().disable();
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        http.addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
     }
 
     @Override

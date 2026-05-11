@@ -25,16 +25,21 @@ import static java.util.Arrays.stream;
 
 @Component
 public class JWTTokenProvider {
+    public static final String TOKEN_HEADER = "Authorization";
+    public static final String TOKEN_PREFIX = "Bearer ";
+    private static final String ISSUER = "KamerReserver";
+    private static final String AUDIENCE = "Reserveer een kamer";
+    private static final long TOKEN_EXPIRATION_MILLIS = 432_000_000L;
+
     @Value("${jwt.secret}")
     private String secret;
 
     public String generateJwtToken(UserPrincipal userPrincipal) {
         String[] claims = getClaimsFromUser(userPrincipal);
-        return JWT.create().withIssuer("KamerReserver").withAudience("Reserveer een kamer")
+        return JWT.create().withIssuer(ISSUER).withAudience(AUDIENCE)
                 .withIssuedAt(new Date()).withSubject(userPrincipal.getUsername())
-                .withArrayClaim("authorities", claims).withExpiresAt(new Date(System.currentTimeMillis() +  432_000_000))
+                .withArrayClaim("authorities", claims).withExpiresAt(new Date(System.currentTimeMillis() + TOKEN_EXPIRATION_MILLIS))
                 .sign(HMAC512(secret.getBytes()));
-        //5dagen expiration time
     }
 
     public List<GrantedAuthority> getAuthorities(String token) {
@@ -59,6 +64,14 @@ public class JWTTokenProvider {
         return verifier.verify(token).getSubject();
     }
 
+    public String resolveToken(HttpServletRequest request) {
+        String authorizationHeader = request.getHeader(TOKEN_HEADER);
+        if (StringUtils.startsWithIgnoreCase(authorizationHeader, TOKEN_PREFIX)) {
+            return authorizationHeader.substring(TOKEN_PREFIX.length());
+        }
+        return null;
+    }
+
     private boolean isTokenExpired(JWTVerifier verifier, String token) {
         Date expiration = verifier.verify(token).getExpiresAt();
         return expiration.before(new Date());
@@ -72,8 +85,8 @@ public class JWTTokenProvider {
     private JWTVerifier getJWTVerifier() {
         JWTVerifier verifier;
         try {
-            Algorithm algorithm = HMAC512(secret);
-            verifier = JWT.require(algorithm).withIssuer("KamerReserver").build();
+            Algorithm algorithm = HMAC512(secret.getBytes());
+            verifier = JWT.require(algorithm).withIssuer(ISSUER).build();
         }catch (JWTVerificationException exception) {
             throw new JWTVerificationException("Token kan niet geverifieerd" +
                     "");

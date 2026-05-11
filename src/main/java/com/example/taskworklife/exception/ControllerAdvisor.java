@@ -2,7 +2,6 @@ package com.example.taskworklife.exception;
 
 import com.example.taskworklife.exception.kamer.KamerNotFoundException;
 import com.example.taskworklife.models.HttpResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;

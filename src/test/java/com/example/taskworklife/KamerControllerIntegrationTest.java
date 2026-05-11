@@ -14,12 +14,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,9 +44,15 @@ class KamerControllerIntegrationTest {
 
     @Test
     void getKamersReturnsSeededRoomsForAuthorizedUser() throws Exception {
-        mockMvc.perform(get("/kamer/all").header(HttpHeaders.AUTHORIZATION, basicAuth("pokemon@gmail.com", "Pokemon!23")))
+        mockMvc.perform(get("/kamers").header(HttpHeaders.AUTHORIZATION, bearerToken("pokemon@gmail.com", "Pokemon!23")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].naam").exists());
+    }
+
+    @Test
+    void legacySingularKamerRoutesAreNoLongerExposed() throws Exception {
+        mockMvc.perform(get("/kamer").header(HttpHeaders.AUTHORIZATION, bearerToken("pokemon@gmail.com", "Pokemon!23")))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -56,10 +60,12 @@ class KamerControllerIntegrationTest {
         String uniqueName = "kamer-" + UUID.randomUUID().toString().substring(0, 8);
         String updatedName = uniqueName + "-updated";
         KamerDto dto = kamerRequest(uniqueName, LocalDateTime.of(2026, 4, 3, 8, 0), LocalDateTime.of(2026, 4, 3, 18, 0));
+        String adminAuthorization = bearerToken("admin@gmail.com", "AdminUser!1");
+        String userAuthorization = bearerToken("pokemon@gmail.com", "Pokemon!23");
 
         mockMvc.perform(
-                post("/kamer/new")
-                        .header(HttpHeaders.AUTHORIZATION, basicAuth("admin@gmail.com", "AdminUser!1"))
+                post("/kamers")
+                        .header(HttpHeaders.AUTHORIZATION, adminAuthorization)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto))
         )
@@ -68,25 +74,25 @@ class KamerControllerIntegrationTest {
         Kamer createdKamer = kamerRepo.findByNaam(uniqueName);
         assertThat(createdKamer).isNotNull();
 
-        mockMvc.perform(get("/kamer/{kamerNaam}", uniqueName)
-                        .header(HttpHeaders.AUTHORIZATION, basicAuth("pokemon@gmail.com", "Pokemon!23")))
+        mockMvc.perform(get("/kamers/{kamerNaam}", uniqueName)
+                        .header(HttpHeaders.AUTHORIZATION, userAuthorization))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.naam").value(uniqueName));
 
         KamerDto updateDto = kamerRequest(updatedName, LocalDateTime.of(2026, 4, 3, 9, 0), LocalDateTime.of(2026, 4, 3, 19, 0));
-        mockMvc.perform(put("/kamer/edit/{vorigeNaam}", uniqueName)
-                        .header(HttpHeaders.AUTHORIZATION, basicAuth("admin@gmail.com", "AdminUser!1"))
+        mockMvc.perform(put("/kamers/{vorigeNaam}", uniqueName)
+                        .header(HttpHeaders.AUTHORIZATION, adminAuthorization)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto)))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/kamer/{kamerNaam}", updatedName)
-                        .header(HttpHeaders.AUTHORIZATION, basicAuth("pokemon@gmail.com", "Pokemon!23")))
+        mockMvc.perform(get("/kamers/{kamerNaam}", updatedName)
+                        .header(HttpHeaders.AUTHORIZATION, userAuthorization))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.naam").value(updatedName));
 
-        mockMvc.perform(delete("/kamer/delete/{naam}", updatedName)
-                        .header(HttpHeaders.AUTHORIZATION, basicAuth("admin@gmail.com", "AdminUser!1")))
+        mockMvc.perform(delete("/kamers/{naam}", updatedName)
+                        .header(HttpHeaders.AUTHORIZATION, adminAuthorization))
                 .andExpect(status().isOk());
 
         assertThat(kamerRepo.findByNaam(updatedName)).isNull();
@@ -96,8 +102,8 @@ class KamerControllerIntegrationTest {
     void kamerReservationsByDayReturnsExistingReservations() throws Exception {
         String today = LocalDate.now().format(RESERVATION_DAY_FORMAT);
 
-        MvcResult result = mockMvc.perform(get("/kamer/{kamerNaam}/reserveringen/{datum}", "Kamer1", today)
-                        .header(HttpHeaders.AUTHORIZATION, basicAuth("pokemon@gmail.com", "Pokemon!23")))
+        MvcResult result = mockMvc.perform(get("/kamers/{kamerNaam}/reserveringen/{datum}", "Kamer1", today)
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("pokemon@gmail.com", "Pokemon!23")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].startTijd").exists())
                 .andReturn();
@@ -112,8 +118,8 @@ class KamerControllerIntegrationTest {
         dto.setEindTijd(LocalDateTime.of(LocalDate.now(), LocalTime.of(7, 45)));
 
         mockMvc.perform(
-                post("/kamer/Kamer1/reserveer")
-                        .header(HttpHeaders.AUTHORIZATION, basicAuth("pokemon@gmail.com", "Pokemon!23"))
+                post("/kamers/Kamer1/reserveer")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("pokemon@gmail.com", "Pokemon!23"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto))
         )
@@ -121,10 +127,14 @@ class KamerControllerIntegrationTest {
                 .andExpect(jsonPath("$.message").exists());
     }
 
-    private String basicAuth(String username, String password) {
-        String token = Base64.getEncoder()
-                .encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
-        return "Basic " + token;
+    private String bearerToken(String username, String password) throws Exception {
+        MvcResult result = mockMvc.perform(post("/user/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new com.example.taskworklife.dto.user.UserLoginDto(username, password))))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        return "Bearer " + objectMapper.readTree(result.getResponse().getContentAsString()).get("token").asText();
     }
 
     private KamerDto kamerRequest(String naam, LocalDateTime start, LocalDateTime sluit) {

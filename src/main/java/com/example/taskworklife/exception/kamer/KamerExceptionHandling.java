@@ -1,6 +1,5 @@
 package com.example.taskworklife.exception.kamer;
 
-import com.example.taskworklife.exception.user.EmailNotFoundException;
 import com.example.taskworklife.models.HttpResponse;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpStatus;

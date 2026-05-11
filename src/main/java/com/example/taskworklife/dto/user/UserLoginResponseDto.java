@@ -20,6 +20,6 @@ public class UserLoginResponseDto {
     private String profileImageUrl;
     private Date laatstIngelodgeDatumDisplay;
     private String role; //ROLE_USER{ read, edit }, ROLE_ADMIN {delete}
-
-
+    private String token;
+    private String tokenType;
 }

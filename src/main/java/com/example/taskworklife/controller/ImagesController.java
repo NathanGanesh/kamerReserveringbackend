@@ -6,7 +6,6 @@ import com.example.taskworklife.exception.images.ImagesNotFoundException;
 import com.example.taskworklife.exception.kamer.KamerNaamIsLeegException;
 import com.example.taskworklife.exception.kamer.KamerNaamNotFoundException;
 import com.example.taskworklife.exception.kamer.KamerNotFoundException;
-import com.example.taskworklife.fileservice.FileService;
 import com.example.taskworklife.service.file.ImagesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 @Controller
 @RequestMapping(path = "/images")

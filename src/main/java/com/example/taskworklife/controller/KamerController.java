@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Locale;
 
 @RestController
-@RequestMapping(path = "/kamer")
+@RequestMapping(path = "/kamers")
 @CrossOrigin(origins = "http://localhost:3000")
 public class KamerController extends ExceptionHandlingKamer {
 
@@ -39,7 +39,7 @@ public class KamerController extends ExceptionHandlingKamer {
         this.kamerService = kamerService;
     }
 
-    @GetMapping("/all")
+    @GetMapping("")
     @CrossOrigin(origins = "http://localhost:3000")
     public ResponseEntity<List<Kamer>> getKamers() {
         return new ResponseEntity<>(kamerService.getKamers(), HttpStatus.OK);
@@ -51,7 +51,7 @@ public class KamerController extends ExceptionHandlingKamer {
         return new ResponseEntity<>(kamerService.getKamerByNaam(kamerNaam), HttpStatus.OK);
     }
 
-    @PostMapping("/new")
+    @PostMapping("")
     @CrossOrigin(origins = "http://localhost:3000")
     public void maakNieuweKamerAan(@RequestBody KamerDto kamerDto) throws KamerAlreadyExist, KamerNotFoundException, IOException, KamerNaamNotFoundException {
         kamerService.maakNieuweKamerAan(kamerDto);
@@ -66,13 +66,13 @@ public class KamerController extends ExceptionHandlingKamer {
         return new ResponseEntity<>(kamerService.getAllKamerReservationsOnCertainDay(kamerNaam, sqlDate), HttpStatus.OK);
     }
 
-    @PutMapping("/edit/{vorigeNaam}")
+    @PutMapping("/{vorigeNaam}")
     @CrossOrigin(origins = "http://localhost:3000")
     public void editKamer(@RequestBody KamerDto kamerDto, @PathVariable("vorigeNaam") String vorigeNaam) throws KamerAlreadyExist, KamerNotFoundException, KamerNaamNotFoundException {
         kamerService.editKamer(kamerDto, vorigeNaam);
     }
 
-    @DeleteMapping("/delete/{naam}")
+    @DeleteMapping("/{naam}")
     @CrossOrigin(origins = "http://localhost:3000")
     public void deleteKamer(@PathVariable("naam") String naam) throws KamerNotFoundException, KamerNaamNotFoundException {
         kamerService.deleteKamerByNaam(naam);
@@ -82,10 +82,5 @@ public class KamerController extends ExceptionHandlingKamer {
     @CrossOrigin(origins = "http://localhost:3000")
     public void reserveerKamer(@PathVariable("naam") String kamerNaam, @Valid @RequestBody ReservatieDto reservatieDto, Authentication authentication) throws KamerReserveringBestaat, EindTijdIsBeforeStartTijd, KamerNaamIsLeegException, KamerNaamNotFoundException, KamerNotFoundException, EmailNotFoundException {
         kamerService.reserveerKamer(kamerNaam, reservatieDto, authentication.getName());
-    }
-
-    @GetMapping("/hello")
-    public String hello() {
-        return "hello!";
     }
 }

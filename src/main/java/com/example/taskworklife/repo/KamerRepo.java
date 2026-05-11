@@ -2,10 +2,8 @@ package com.example.taskworklife.repo;
 
 
 import com.example.taskworklife.models.Kamer;
-import com.example.taskworklife.models.pojo.ReservationPojo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -21,6 +19,6 @@ public interface KamerRepo extends JpaRepository<Kamer, Long> {
 //        Kamer findByNaamAndGetAllReserveringenOnSpeicifedDay(@Param("dateToFilter") String dateToFilter);
 
         @Query(value = "SELECT p.end as end , p.start as start FROM Kamer b,Reservering p WHERE (b.id = p.kamer.id) AND (b.naam = :naam AND(:date between cast(p.start as date)   AND cast(p.end as date)) )")
-        Optional<List<Object>> findByNaamAndGetAllReserveringenOnSpeicifedDay(@Param("date") Date date, @Param("naam") String naam);
+        Optional<List<Object>> findByNaamAndGetAllReserveringenOnSpecificDay(@Param("date") Date date, @Param("naam") String naam);
 
 }

@@ -1,8 +1,6 @@
 package com.example.taskworklife.converter;
 
-import com.example.taskworklife.dto.user.UserLoginDto;
 import com.example.taskworklife.dto.user.UserLoginResponseDto;
-import com.example.taskworklife.dto.user.UserRegisterDto;
 import com.example.taskworklife.models.user.User;
 import lombok.Synchronized;
 import org.springframework.core.convert.converter.Converter;

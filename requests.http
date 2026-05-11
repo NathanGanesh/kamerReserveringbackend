@@ -1,11 +1,11 @@
 @baseUrl = http://localhost:8080
-@adminAuth = Basic YWRtaW5AZ21haWwuY29tOkFkbWluVXNlciEx
-@userAuth = Basic cG9rZW1vbkBnbWFpbC5jb206UG9rZW1vbiEyMw==
+@adminToken = paste-admin-token-here
+@userToken = paste-user-token-here
 @userId = 1
 @reservationId = 1
 
 ### Register user
-POST {{baseUrl}}/user/register
+POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
@@ -16,7 +16,16 @@ Content-Type: application/json
   "terms": true
 }
 
-### Login seeded user
+### Login admin and copy the token into @adminToken
+POST {{baseUrl}}/user/login
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "wachtwoord": "AdminUser!1"
+}
+
+### Login seeded user and copy the token into @userToken
 POST {{baseUrl}}/user/login
 Content-Type: application/json
 
@@ -26,16 +35,16 @@ Content-Type: application/json
 }
 
 ### List users as admin
-GET {{baseUrl}}/user/all
-Authorization: {{adminAuth}}
+GET {{baseUrl}}/users
+Authorization: Bearer {{adminToken}}
 
 ### Get user by id as admin
-GET {{baseUrl}}/user/{{userId}}
-Authorization: {{adminAuth}}
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{adminToken}}
 
 ### Update user as admin
-PUT {{baseUrl}}/user/{{userId}}
-Authorization: {{adminAuth}}
+PUT {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
 {
@@ -48,20 +57,20 @@ Content-Type: application/json
 }
 
 ### Delete user as admin
-DELETE {{baseUrl}}/user/{{userId}}
-Authorization: {{adminAuth}}
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{adminToken}}
 
 ### List rooms
-GET {{baseUrl}}/kamer/all
-Authorization: {{userAuth}}
+GET {{baseUrl}}/kamers
+Authorization: Bearer {{userToken}}
 
 ### Get room by name
-GET {{baseUrl}}/kamer/kamer2
-Authorization: {{userAuth}}
+GET {{baseUrl}}/kamers/kamer2
+Authorization: Bearer {{userToken}}
 
 ### Create room as admin
-POST {{baseUrl}}/kamer/new
-Authorization: {{adminAuth}}
+POST {{baseUrl}}/kamers
+Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
 {
@@ -71,8 +80,8 @@ Content-Type: application/json
 }
 
 ### Update room as admin
-PUT {{baseUrl}}/kamer/edit/http-room
-Authorization: {{adminAuth}}
+PUT {{baseUrl}}/kamers/http-room
+Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
 {
@@ -82,16 +91,16 @@ Content-Type: application/json
 }
 
 ### Delete room as admin
-DELETE {{baseUrl}}/kamer/delete/http-room-updated
-Authorization: {{adminAuth}}
+DELETE {{baseUrl}}/kamers/http-room-updated
+Authorization: Bearer {{adminToken}}
 
 ### List reservations for current user
-GET {{baseUrl}}/reservering/all
-Authorization: {{userAuth}}
+GET {{baseUrl}}/reserveringen
+Authorization: Bearer {{userToken}}
 
 ### Create reservation
-POST {{baseUrl}}/reservering
-Authorization: {{userAuth}}
+POST {{baseUrl}}/reserveringen
+Authorization: Bearer {{userToken}}
 Content-Type: application/json
 
 {
@@ -101,12 +110,12 @@ Content-Type: application/json
 }
 
 ### Get reservation by id
-GET {{baseUrl}}/reservering/{{reservationId}}
-Authorization: {{userAuth}}
+GET {{baseUrl}}/reserveringen/{{reservationId}}
+Authorization: Bearer {{userToken}}
 
 ### Update reservation by id
-PUT {{baseUrl}}/reservering/{{reservationId}}
-Authorization: {{userAuth}}
+PUT {{baseUrl}}/reserveringen/{{reservationId}}
+Authorization: Bearer {{userToken}}
 Content-Type: application/json
 
 {
@@ -116,12 +125,12 @@ Content-Type: application/json
 }
 
 ### Delete reservation by id
-DELETE {{baseUrl}}/reservering/{{reservationId}}
-Authorization: {{userAuth}}
+DELETE {{baseUrl}}/reserveringen/{{reservationId}}
+Authorization: Bearer {{userToken}}
 
 ### Overlap example should fail with 400
-POST {{baseUrl}}/reservering
-Authorization: {{userAuth}}
+POST {{baseUrl}}/reserveringen
+Authorization: Bearer {{userToken}}
 Content-Type: application/json
 
 {
@@ -131,11 +140,11 @@ Content-Type: application/json
 }
 
 ### Unauthorized example should fail with 401
-GET {{baseUrl}}/reservering/all
+GET {{baseUrl}}/reserveringen
 
 ### Forbidden example should fail with 403
-PUT {{baseUrl}}/user/{{userId}}
-Authorization: {{userAuth}}
+PUT {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{userToken}}
 Content-Type: application/json
 
 {

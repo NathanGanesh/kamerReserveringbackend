@@ -1,10 +1,8 @@
 package com.example.taskworklife.exception;
 
 import com.example.taskworklife.exception.kamer.*;
-import com.example.taskworklife.exception.user.TermsNotAcceptedException;
 import com.example.taskworklife.models.HttpResponse;
 import org.springframework.boot.web.servlet.error.ErrorController;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;

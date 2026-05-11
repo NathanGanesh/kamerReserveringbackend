@@ -20,7 +20,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "/reservering")
+@RequestMapping(path = {"/reservering", "/reserveringen"})
 @CrossOrigin(origins = "http://localhost:3000")
 public class ReserveringController {
     private final ReserveringService reserveringService;
@@ -30,7 +30,7 @@ public class ReserveringController {
         this.reserveringService = reserveringService;
     }
 
-    @GetMapping("/all")
+    @GetMapping({"", "/all"})
     public ResponseEntity<List<ReserveringResponseDto>> getReserveringen(Authentication authentication) {
         boolean admin = isAdmin(authentication);
         return new ResponseEntity<>(reserveringService.getReserveringen(authentication.getName(), admin), HttpStatus.OK);
@@ -42,7 +42,7 @@ public class ReserveringController {
         return new ResponseEntity<>(reserveringService.getReserveringById(id, authentication.getName(), admin), HttpStatus.OK);
     }
 
-    @PostMapping
+    @PostMapping("")
     public ResponseEntity<ReserveringResponseDto> createReservering(@Valid @RequestBody ReservatieDto reservatieDto, Authentication authentication) throws KamerReserveringBestaat, EindTijdIsBeforeStartTijd, KamerNaamIsLeegException, KamerNaamNotFoundException, KamerNotFoundException, EmailNotFoundException {
         return new ResponseEntity<>(reserveringService.createReservering(reservatieDto, authentication.getName()), HttpStatus.CREATED);
     }
