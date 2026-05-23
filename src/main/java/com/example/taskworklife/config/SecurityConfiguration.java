@@ -47,7 +47,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
-                .antMatchers("/user/login", "/user/register", "/users", "/users/register", "/user/image/**").permitAll()
+                .antMatchers("/health", "/user/login", "/user/register", "/users", "/users/register", "/user/image/**").permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .antMatchers(HttpMethod.GET, "/kamers", "/kamers/*", "/kamers/*/reserveringen/*").hasAnyAuthority("kamer:read")
                 .antMatchers(HttpMethod.POST, "/kamers").hasAnyAuthority("kameradmin:write")
